@@ -32,23 +32,33 @@ class ChoiceViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        for i in 0..<AppManager.shared.supportedApps.count {
+        let totalCount = AppManager.shared.supportedApps.count
+        let clippingWidth = scrollView.bounds.size.width
+        var previousView = NSView()
+
+        for i in 0..<totalCount {
             let appType = AppManager.shared.supportedApps[i]
             let singularChoiceVC = SingularChoiceViewController.instantiate()
             singularChoiceVC.loadView()
             singularChoiceVC.correspondingAppType = appType
             let svcView = singularChoiceVC.view
-            let start = svcView.bounds.width * CGFloat(i) + marginBetweenApps * CGFloat(i + 1)
-            let end = svcView.bounds.width * CGFloat(i + 1) + marginBetweenApps * CGFloat(i + 2)
+            var start = previousView.frame.origin.x + previousView.frame.size.width + marginBetweenApps
+            let endIfFits = svcView.bounds.width * CGFloat(totalCount) + marginBetweenApps * CGFloat(totalCount - 1)
+            var end = start + svcView.frame.size.width
+            if (clippingWidth >= endIfFits) {
+                if (i == 0) {
+                    start = (clippingWidth - endIfFits) / 2
+                    end = start + svcView.frame.size.width
+                }
+            } else {
+                end += marginBetweenApps
+            }
             svcView.frame = CGRect(x: start, y: 0, width: svcView.bounds.width, height: svcView.bounds.height)
             scrollContentView.addSubview(svcView)
-            
-            let clippingWidth = scrollView.bounds.size.width
-            if (clippingWidth >= end) {
-                (clippingWidth - end) / 2
-            }
-            scrollContentView.frame = CGRect(x: (clippingWidth >= end) ? ((clippingWidth - end) / 2) : 0, y: 0, width: end, height: scrollContentView.frame.size.height)
+            scrollContentView.setFrameSize(NSSize(width: end, height: scrollContentView.frame.size.height))
             singularVCs.append(singularChoiceVC)
+            
+            previousView = svcView
         }
         getStartedSubTitle.stringValue = AppManager.shared.getStartedSubTitle
         otherOSSubtitle.stringValue = AppManager.shared.otherOSSubtitle
